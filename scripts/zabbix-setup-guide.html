@@ -1,0 +1,1114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Zabbix Monitoring Setup Guide</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Syne:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0e1a;
+    --surface: #111827;
+    --surface2: #1a2235;
+    --border: #1e2d45;
+    --accent: #e8c547;
+    --accent2: #4ade80;
+    --accent3: #60a5fa;
+    --danger: #f87171;
+    --text: #e2e8f0;
+    --muted: #64748b;
+    --code-bg: #0d1117;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Syne', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.7;
+    min-height: 100vh;
+  }
+
+  /* Header */
+  header {
+    background: linear-gradient(135deg, #0a0e1a 0%, #111827 50%, #0f1e35 100%);
+    border-bottom: 1px solid var(--border);
+    padding: 60px 40px 50px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  header::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    right: -10%;
+    width: 600px;
+    height: 600px;
+    background: radial-gradient(circle, rgba(232,197,71,0.06) 0%, transparent 70%);
+    pointer-events: none;
+  }
+
+  header::after {
+    content: 'ZABBIX';
+    position: absolute;
+    right: 40px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 120px;
+    font-weight: 800;
+    color: rgba(255,255,255,0.02);
+    letter-spacing: -5px;
+    pointer-events: none;
+  }
+
+  .header-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(232,197,71,0.1);
+    border: 1px solid rgba(232,197,71,0.3);
+    color: var(--accent);
+    padding: 6px 14px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-family: 'JetBrains Mono', monospace;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 20px;
+  }
+
+  .header-badge::before { content: '●'; font-size: 8px; animation: pulse 2s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
+
+  h1 {
+    font-size: clamp(28px, 4vw, 52px);
+    font-weight: 800;
+    line-height: 1.1;
+    margin-bottom: 16px;
+    background: linear-gradient(135deg, #fff 0%, #94a3b8 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .header-sub {
+    color: var(--muted);
+    font-size: 15px;
+    max-width: 600px;
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  .header-meta {
+    display: flex;
+    gap: 24px;
+    margin-top: 30px;
+    flex-wrap: wrap;
+  }
+
+  .meta-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    color: var(--muted);
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  .meta-item span { color: var(--accent2); }
+
+  /* Layout */
+  .container {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 0 40px;
+  }
+
+  /* TOC */
+  .toc {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--accent);
+    padding: 30px;
+    margin: 40px 0;
+    border-radius: 0 8px 8px 0;
+  }
+
+  .toc h3 {
+    font-size: 11px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--accent);
+    font-family: 'JetBrains Mono', monospace;
+    margin-bottom: 16px;
+  }
+
+  .toc ol {
+    list-style: none;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 6px;
+  }
+
+  .toc li a {
+    color: var(--muted);
+    text-decoration: none;
+    font-size: 13px;
+    font-family: 'JetBrains Mono', monospace;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 4px 0;
+    transition: color 0.2s;
+  }
+
+  .toc li a:hover { color: var(--accent3); }
+  .toc li a::before { content: counter(item, decimal-leading-zero); counter-increment: item; color: var(--border); font-size: 11px; }
+  .toc ol { counter-reset: item; }
+
+  /* Sections */
+  .section {
+    margin: 50px 0;
+    animation: fadeIn 0.5s ease;
+  }
+
+  @keyframes fadeIn { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:translateY(0)} }
+
+  .section-header {
+    display: flex;
+    align-items: flex-start;
+    gap: 20px;
+    margin-bottom: 28px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .step-num {
+    background: var(--accent);
+    color: #000;
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 700;
+    font-size: 12px;
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+    flex-shrink: 0;
+    margin-top: 4px;
+  }
+
+  .section-title { font-size: 22px; font-weight: 800; color: #fff; }
+  .section-desc { font-size: 14px; color: var(--muted); margin-top: 4px; font-family: 'JetBrains Mono', monospace; }
+
+  /* Cards */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 24px;
+    margin-bottom: 16px;
+  }
+
+  .card-title {
+    font-size: 11px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--accent3);
+    font-family: 'JetBrains Mono', monospace;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .card-title::before {
+    content: '';
+    width: 20px;
+    height: 1px;
+    background: var(--accent3);
+  }
+
+  /* Steps list */
+  .steps {
+    list-style: none;
+    counter-reset: steps;
+  }
+
+  .steps li {
+    counter-increment: steps;
+    display: flex;
+    gap: 14px;
+    align-items: flex-start;
+    padding: 10px 0;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+    font-size: 14px;
+  }
+
+  .steps li:last-child { border-bottom: none; }
+
+  .steps li::before {
+    content: counter(steps);
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--muted);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    width: 22px;
+    height: 22px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 3px;
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+
+  /* Code blocks */
+  .code-block {
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    margin: 16px 0;
+    overflow: hidden;
+  }
+
+  .code-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 16px;
+    background: rgba(255,255,255,0.03);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .code-lang {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  .code-dots { display: flex; gap: 6px; }
+  .code-dots span { width: 10px; height: 10px; border-radius: 50%; }
+  .code-dots span:nth-child(1) { background: #f87171; }
+  .code-dots span:nth-child(2) { background: #fbbf24; }
+  .code-dots span:nth-child(3) { background: #4ade80; }
+
+  pre {
+    padding: 20px;
+    overflow-x: auto;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    line-height: 1.8;
+    color: #e2e8f0;
+  }
+
+  .key { color: #60a5fa; }
+  .val { color: #4ade80; }
+  .comment { color: #475569; font-style: italic; }
+  .highlight { color: var(--accent); }
+
+  /* Config table */
+  .config-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    margin: 16px 0;
+  }
+
+  .config-table th {
+    text-align: left;
+    padding: 10px 14px;
+    background: var(--surface2);
+    color: var(--muted);
+    font-size: 10px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .config-table td {
+    padding: 10px 14px;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+    vertical-align: top;
+  }
+
+  .config-table tr:last-child td { border-bottom: none; }
+  .config-table td:first-child { color: var(--accent3); }
+  .config-table td:nth-child(2) { color: var(--accent2); }
+  .config-table td:nth-child(3) { color: var(--muted); font-size: 12px; }
+
+  /* Alert/tip boxes */
+  .tip {
+    display: flex;
+    gap: 14px;
+    padding: 16px 20px;
+    border-radius: 6px;
+    margin: 16px 0;
+    font-size: 13px;
+  }
+
+  .tip-warning { background: rgba(251,191,36,0.08); border-left: 3px solid #fbbf24; }
+  .tip-info { background: rgba(96,165,250,0.08); border-left: 3px solid #60a5fa; }
+  .tip-success { background: rgba(74,222,128,0.08); border-left: 3px solid #4ade80; }
+  .tip-danger { background: rgba(248,113,113,0.08); border-left: 3px solid #f87171; }
+
+  .tip-icon { font-size: 16px; flex-shrink: 0; margin-top: 1px; }
+  .tip-content { color: var(--text); line-height: 1.6; }
+  .tip-content strong { display: block; margin-bottom: 4px; font-size: 12px; letter-spacing: 1px; text-transform: uppercase; }
+
+  /* Expression box */
+  .expression {
+    background: var(--code-bg);
+    border: 1px solid rgba(232,197,71,0.2);
+    border-left: 3px solid var(--accent);
+    padding: 14px 18px;
+    border-radius: 0 6px 6px 0;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    color: var(--accent);
+    margin: 10px 0;
+    word-break: break-all;
+  }
+
+  /* Nav path */
+  .nav-path {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    padding: 6px 12px;
+    border-radius: 4px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    color: var(--muted);
+    margin: 8px 0;
+    flex-wrap: wrap;
+  }
+
+  .nav-path .arrow { color: var(--border); }
+  .nav-path .page { color: var(--accent3); }
+
+  /* Scenario cards */
+  .scenario-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 16px;
+    margin: 16px 0;
+  }
+
+  .scenario-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 20px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .scenario-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+  }
+
+  .scenario-card.real::before { background: var(--accent2); }
+  .scenario-card.fake::before { background: var(--danger); }
+
+  .scenario-type {
+    font-size: 10px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    font-family: 'JetBrains Mono', monospace;
+    margin-bottom: 12px;
+  }
+
+  .scenario-card.real .scenario-type { color: var(--accent2); }
+  .scenario-card.fake .scenario-type { color: var(--danger); }
+
+  .scenario-name { font-size: 15px; font-weight: 600; color: #fff; margin-bottom: 12px; }
+
+  .scenario-field {
+    display: flex;
+    gap: 8px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    margin: 6px 0;
+  }
+
+  .scenario-field .label { color: var(--muted); min-width: 60px; }
+  .scenario-field .value { color: var(--text); word-break: break-all; }
+
+  /* Trigger table */
+  .trigger-item {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 16px 20px;
+    margin-bottom: 12px;
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 12px;
+    align-items: start;
+  }
+
+  .trigger-name { font-weight: 600; font-size: 14px; color: #fff; margin-bottom: 6px; }
+  .trigger-severity {
+    background: rgba(248,113,113,0.15);
+    color: var(--danger);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    padding: 3px 10px;
+    border-radius: 3px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+
+  /* Footer */
+  footer {
+    margin-top: 80px;
+    border-top: 1px solid var(--border);
+    padding: 40px;
+    text-align: center;
+  }
+
+  .footer-text {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+    letter-spacing: 1px;
+  }
+
+  .footer-text span { color: var(--accent); }
+
+  /* Infrastructure summary */
+  .infra-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 12px;
+    margin: 16px 0;
+  }
+
+  .infra-item {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 16px;
+    text-align: center;
+  }
+
+  .infra-icon { font-size: 24px; margin-bottom: 8px; }
+  .infra-label { font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); font-family: 'JetBrains Mono', monospace; margin-bottom: 4px; }
+  .infra-value { font-size: 13px; font-weight: 600; color: var(--accent3); font-family: 'JetBrains Mono', monospace; }
+
+  kbd {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-bottom: 2px solid var(--border);
+    padding: 2px 7px;
+    border-radius: 3px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--text);
+  }
+
+  @media (max-width: 640px) {
+    header, .container { padding: 30px 20px; }
+    header::after { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="container">
+    <div class="header-badge">Live Documentation</div>
+    <h1>Zabbix Monitoring<br>Setup Guide</h1>
+    <p class="header-sub">// Complete configuration reference for API monitoring, email alerts & EC2 system health</p>
+    <div class="header-meta">
+      <div class="meta-item">Platform: <span>AWS EC2 + Docker</span></div>
+      <div class="meta-item">Zabbix: <span>v6.4.21</span></div>
+      <div class="meta-item">IaC: <span>Terraform</span></div>
+      <div class="meta-item">Region: <span>ap-southeast-1</span></div>
+    </div>
+  </div>
+</header>
+
+<div class="container">
+
+  <!-- Infrastructure Overview -->
+  <div class="section">
+    <div class="section-header">
+      <div class="step-num">00</div>
+      <div>
+        <div class="section-title">Infrastructure Overview</div>
+        <div class="section-desc">// what was deployed via terraform</div>
+      </div>
+    </div>
+
+    <div class="infra-grid">
+      <div class="infra-item">
+        <div class="infra-icon">🌐</div>
+        <div class="infra-label">VPC</div>
+        <div class="infra-value">10.0.0.0/16</div>
+      </div>
+      <div class="infra-item">
+        <div class="infra-icon">💻</div>
+        <div class="infra-label">EC2</div>
+        <div class="infra-value">t2.small</div>
+      </div>
+      <div class="infra-item">
+        <div class="infra-icon">💾</div>
+        <div class="infra-label">EBS Volume</div>
+        <div class="infra-value">20GB gp2</div>
+      </div>
+      <div class="infra-item">
+        <div class="infra-icon">🔒</div>
+        <div class="infra-label">Elastic IP</div>
+        <div class="infra-value">Static Public IP</div>
+      </div>
+      <div class="infra-item">
+        <div class="infra-icon">🐳</div>
+        <div class="infra-label">Containers</div>
+        <div class="infra-value">MySQL + Zabbix</div>
+      </div>
+      <div class="infra-item">
+        <div class="infra-icon">📁</div>
+        <div class="infra-label">Data Mount</div>
+        <div class="infra-value">/data/zabbix</div>
+      </div>
+    </div>
+
+    <div class="tip tip-success">
+      <div class="tip-icon">✅</div>
+      <div class="tip-content">
+        <strong>Data Persistence</strong>
+        All Zabbix configuration lives on the EBS volume at <code>/data/zabbix/mysql_data</code>. Destroying and recreating the EC2 instance will NOT lose your configuration as long as the EBS volume is preserved (<code>lifecycle { prevent_destroy = true }</code>).
+      </div>
+    </div>
+  </div>
+
+  <!-- TOC -->
+  <div class="toc">
+    <h3>// Table of Contents</h3>
+    <ol>
+      <li><a href="#s1">Login & Change Password</a></li>
+      <li><a href="#s2">Setup Gmail Alerts</a></li>
+      <li><a href="#s3">Add Email to Admin User</a></li>
+      <li><a href="#s4">Create a Host</a></li>
+      <li><a href="#s5">Create Web Scenarios</a></li>
+      <li><a href="#s6">Create Triggers</a></li>
+      <li><a href="#s7">Create Alert Action</a></li>
+      <li><a href="#s8">Install Zabbix Agent</a></li>
+      <li><a href="#s9">Add EC2 Host for System Monitoring</a></li>
+      <li><a href="#s10">Destroy & Rebuild (Data Safe)</a></li>
+    </ol>
+  </div>
+
+  <!-- Step 1 -->
+  <div class="section" id="s1">
+    <div class="section-header">
+      <div class="step-num">01</div>
+      <div>
+        <div class="section-title">Login & Change Password</div>
+        <div class="section-desc">// first thing to do after deployment</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Default Credentials</div>
+      <table class="config-table">
+        <tr><th>Field</th><th>Value</th><th>Note</th></tr>
+        <tr><td>URL</td><td>http://&lt;your-elastic-ip&gt;</td><td>From terraform output zabbix_url</td></tr>
+        <tr><td>Username</td><td>Admin</td><td>Case sensitive</td></tr>
+        <tr><td>Password</td><td>zabbix</td><td>Change immediately!</td></tr>
+      </table>
+    </div>
+
+    <div class="nav-path">
+      <span class="page">Top Right Corner</span>
+      <span class="arrow">→</span>
+      <span class="page">User Settings</span>
+      <span class="arrow">→</span>
+      <span class="page">Change Password</span>
+    </div>
+
+    <div class="tip tip-danger">
+      <div class="tip-icon">⚠️</div>
+      <div class="tip-content">
+        <strong>Security Warning</strong>
+        Always change the default Admin password immediately after first login. The default password "zabbix" is publicly known.
+      </div>
+    </div>
+  </div>
+
+  <!-- Step 2 -->
+  <div class="section" id="s2">
+    <div class="section-header">
+      <div class="step-num">02</div>
+      <div>
+        <div class="section-title">Setup Gmail Alerts</div>
+        <div class="section-desc">// configure smtp for email notifications</div>
+      </div>
+    </div>
+
+    <div class="nav-path">
+      <span class="page">Administration</span>
+      <span class="arrow">→</span>
+      <span class="page">Media types</span>
+      <span class="arrow">→</span>
+      <span class="page">Email</span>
+    </div>
+
+    <div class="card">
+      <div class="card-title">SMTP Configuration</div>
+      <table class="config-table">
+        <tr><th>Setting</th><th>Value</th><th>Description</th></tr>
+        <tr><td>SMTP server</td><td>smtp.gmail.com</td><td>Gmail SMTP host</td></tr>
+        <tr><td>SMTP port</td><td>587</td><td>TLS port</td></tr>
+        <tr><td>SMTP email</td><td>your@gmail.com</td><td>Your Gmail address</td></tr>
+        <tr><td>Connection</td><td>STARTTLS</td><td>Encryption type</td></tr>
+        <tr><td>Authentication</td><td>Username and password</td><td>Enable auth</td></tr>
+        <tr><td>Username</td><td>your@gmail.com</td><td>Your Gmail</td></tr>
+        <tr><td>Password</td><td>App Password (16 chars)</td><td>NOT your Gmail password</td></tr>
+      </table>
+    </div>
+
+    <div class="tip tip-warning">
+      <div class="tip-icon">🔑</div>
+      <div class="tip-content">
+        <strong>Gmail App Password Required</strong>
+        You cannot use your regular Gmail password. You must generate an App Password:
+        Google Account → Security → 2-Step Verification → App passwords → Create → Name it "Zabbix"
+        You'll get a 16-character password like: <code>abcd efgh ijkl mnop</code>
+      </div>
+    </div>
+
+    <ul class="steps">
+      <li>Fill in all SMTP settings as shown above</li>
+      <li>Click <strong>Update</strong> to save</li>
+      <li>Click <strong>Test</strong> button → enter your Gmail → click Test</li>
+      <li>Check your inbox — test email should arrive within 30 seconds</li>
+    </ul>
+  </div>
+
+  <!-- Step 3 -->
+  <div class="section" id="s3">
+    <div class="section-header">
+      <div class="step-num">03</div>
+      <div>
+        <div class="section-title">Add Email to Admin User</div>
+        <div class="section-desc">// link your gmail to the admin account</div>
+      </div>
+    </div>
+
+    <div class="nav-path">
+      <span class="page">Administration</span>
+      <span class="arrow">→</span>
+      <span class="page">Users</span>
+      <span class="arrow">→</span>
+      <span class="page">Admin</span>
+      <span class="arrow">→</span>
+      <span class="page">Media tab</span>
+    </div>
+
+    <ul class="steps">
+      <li>Click <strong>Media</strong> tab at the top of the user form</li>
+      <li>Click <strong>Add</strong> button</li>
+      <li>Type: <strong>Email</strong></li>
+      <li>Send to: <strong>your@gmail.com</strong></li>
+      <li>Click <strong>Add</strong> in the popup</li>
+      <li>Click <strong>Update</strong> to save the user</li>
+    </ul>
+
+    <div class="tip tip-info">
+      <div class="tip-icon">ℹ️</div>
+      <div class="tip-content">
+        <strong>Also Enable Default Action</strong>
+        Go to Configuration → Actions → Trigger actions → find "Report problems to Zabbix administrators" → make sure it is <strong>Enabled</strong>. This catches all alerts automatically.
+      </div>
+    </div>
+  </div>
+
+  <!-- Step 4 -->
+  <div class="section" id="s4">
+    <div class="section-header">
+      <div class="step-num">04</div>
+      <div>
+        <div class="section-title">Create a Host</div>
+        <div class="section-desc">// group your monitored endpoints under a host</div>
+      </div>
+    </div>
+
+    <div class="nav-path">
+      <span class="page">Configuration</span>
+      <span class="arrow">→</span>
+      <span class="page">Hosts</span>
+      <span class="arrow">→</span>
+      <span class="page">Create host</span>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Host Settings</div>
+      <table class="config-table">
+        <tr><th>Field</th><th>Value</th><th>Note</th></tr>
+        <tr><td>Host name</td><td>Dronos-APIs</td><td>No spaces, use hyphens</td></tr>
+        <tr><td>Groups</td><td>Linux servers</td><td>Or create "API Monitoring"</td></tr>
+        <tr><td>Interface type</td><td>Agent</td><td>Click Add → Agent</td></tr>
+        <tr><td>IP address</td><td>127.0.0.1</td><td>For API-only monitoring</td></tr>
+        <tr><td>Port</td><td>10050</td><td>Default agent port</td></tr>
+      </table>
+    </div>
+  </div>
+
+  <!-- Step 5 -->
+  <div class="section" id="s5">
+    <div class="section-header">
+      <div class="step-num">05</div>
+      <div>
+        <div class="section-title">Create Web Scenarios</div>
+        <div class="section-desc">// define which urls to monitor</div>
+      </div>
+    </div>
+
+    <div class="nav-path">
+      <span class="page">Configuration</span>
+      <span class="arrow">→</span>
+      <span class="page">Hosts</span>
+      <span class="arrow">→</span>
+      <span class="page">Dronos-APIs</span>
+      <span class="arrow">→</span>
+      <span class="page">Web scenarios</span>
+      <span class="arrow">→</span>
+      <span class="page">Create web scenario</span>
+    </div>
+
+    <div class="scenario-grid">
+      <div class="scenario-card real">
+        <div class="scenario-type">✅ Real API</div>
+        <div class="scenario-name">Account Healthcheck</div>
+        <div class="scenario-field"><span class="label">Name:</span><span class="value">Account Healthcheck</span></div>
+        <div class="scenario-field"><span class="label">Interval:</span><span class="value">60s</span></div>
+        <div class="scenario-field"><span class="label">URL:</span><span class="value">https://development-api.dronos.ai/account/healthcheck</span></div>
+        <div class="scenario-field"><span class="label">Status:</span><span class="value">200</span></div>
+      </div>
+
+      <div class="scenario-card real">
+        <div class="scenario-type">✅ Real API</div>
+        <div class="scenario-name">Templates Healthcheck</div>
+        <div class="scenario-field"><span class="label">Name:</span><span class="value">Templates Healthcheck</span></div>
+        <div class="scenario-field"><span class="label">Interval:</span><span class="value">60s</span></div>
+        <div class="scenario-field"><span class="label">URL:</span><span class="value">https://development-api.dronos.ai/templates/healthcheck</span></div>
+        <div class="scenario-field"><span class="label">Status:</span><span class="value">200</span></div>
+      </div>
+
+      <div class="scenario-card fake">
+        <div class="scenario-type">❌ Fake API (Test Alert)</div>
+        <div class="scenario-name">Fake API - Should Fail</div>
+        <div class="scenario-field"><span class="label">Name:</span><span class="value">Fake API - Should Fail</span></div>
+        <div class="scenario-field"><span class="label">Interval:</span><span class="value">60s</span></div>
+        <div class="scenario-field"><span class="label">URL:</span><span class="value">https://this-api-does-not-exist-xyz123.com/health</span></div>
+        <div class="scenario-field"><span class="label">Status:</span><span class="value">200 (will fail)</span></div>
+      </div>
+    </div>
+
+    <div class="tip tip-info">
+      <div class="tip-icon">💡</div>
+      <div class="tip-content">
+        <strong>How to add Steps in a Scenario</strong>
+        After setting the scenario name and interval, click the <strong>Steps</strong> tab → click <strong>Add</strong> → enter the step name, URL, and required HTTP status code (200) → click <strong>Add</strong> → then click <strong>Add</strong> again to save the whole scenario.
+      </div>
+    </div>
+  </div>
+
+  <!-- Step 6 -->
+  <div class="section" id="s6">
+    <div class="section-header">
+      <div class="step-num">06</div>
+      <div>
+        <div class="section-title">Create Triggers</div>
+        <div class="section-desc">// define conditions that fire alerts</div>
+      </div>
+    </div>
+
+    <div class="nav-path">
+      <span class="page">Configuration</span>
+      <span class="arrow">→</span>
+      <span class="page">Hosts</span>
+      <span class="arrow">→</span>
+      <span class="page">Dronos-APIs</span>
+      <span class="arrow">→</span>
+      <span class="page">Triggers</span>
+      <span class="arrow">→</span>
+      <span class="page">Create trigger</span>
+    </div>
+
+    <div class="trigger-item">
+      <div>
+        <div class="trigger-name">API DOWN - Account Healthcheck</div>
+        <div class="expression">last(/Dronos-APIs/web.test.fail[Account Healthcheck])&lt;&gt;0</div>
+      </div>
+      <div class="trigger-severity">High</div>
+    </div>
+
+    <div class="trigger-item">
+      <div>
+        <div class="trigger-name">API DOWN - Templates Healthcheck</div>
+        <div class="expression">last(/Dronos-APIs/web.test.fail[Templates Healthcheck])&lt;&gt;0</div>
+      </div>
+      <div class="trigger-severity">High</div>
+    </div>
+
+    <div class="trigger-item">
+      <div>
+        <div class="trigger-name">API DOWN - Fake API</div>
+        <div class="expression">last(/Dronos-APIs/web.test.fail[Fake API - Should Fail])&lt;&gt;0</div>
+      </div>
+      <div class="trigger-severity">High</div>
+    </div>
+
+    <div class="tip tip-warning">
+      <div class="tip-icon">📋</div>
+      <div class="tip-content">
+        <strong>Expression Syntax</strong>
+        The expression format is: <code>last(/HOST_NAME/web.test.fail[SCENARIO_NAME])&lt;&gt;0</code><br>
+        The scenario name inside brackets must match EXACTLY what you named it in Step 5 — including capitalization and spaces.
+      </div>
+    </div>
+  </div>
+
+  <!-- Step 7 -->
+  <div class="section" id="s7">
+    <div class="section-header">
+      <div class="step-num">07</div>
+      <div>
+        <div class="section-title">Create Alert Action</div>
+        <div class="section-desc">// define what happens when a trigger fires</div>
+      </div>
+    </div>
+
+    <div class="nav-path">
+      <span class="page">Configuration</span>
+      <span class="arrow">→</span>
+      <span class="page">Actions</span>
+      <span class="arrow">→</span>
+      <span class="page">Trigger actions</span>
+      <span class="arrow">→</span>
+      <span class="page">Create action</span>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Action Tab</div>
+      <table class="config-table">
+        <tr><th>Field</th><th>Value</th></tr>
+        <tr><td>Name</td><td>Send Email on API Down</td></tr>
+      </table>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Conditions Tab</div>
+      <table class="config-table">
+        <tr><th>Field</th><th>Value</th></tr>
+        <tr><td>Type</td><td>Trigger severity</td></tr>
+        <tr><td>Operator</td><td>&gt;= (greater than or equal)</td></tr>
+        <tr><td>Value</td><td>Warning (to catch all severities)</td></tr>
+      </table>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Operations Tab</div>
+      <table class="config-table">
+        <tr><th>Field</th><th>Value</th></tr>
+        <tr><td>Operation type</td><td>Send message</td></tr>
+        <tr><td>Send to users</td><td>Admin</td></tr>
+        <tr><td>Send only to</td><td>Email</td></tr>
+      </table>
+    </div>
+
+    <div class="tip tip-success">
+      <div class="tip-icon">✅</div>
+      <div class="tip-content">
+        <strong>Also Enable the Default Action</strong>
+        "Report problems to Zabbix administrators" should also be <strong>Enabled</strong>. This is the built-in action that covers all hosts including EC2 system alerts.
+      </div>
+    </div>
+  </div>
+
+  <!-- Step 8 -->
+  <div class="section" id="s8">
+    <div class="section-header">
+      <div class="step-num">08</div>
+      <div>
+        <div class="section-title">Install Zabbix Agent on EC2</div>
+        <div class="section-desc">// enables cpu, memory, disk monitoring</div>
+      </div>
+    </div>
+
+    <div class="code-block">
+      <div class="code-header">
+        <div class="code-dots"><span></span><span></span><span></span></div>
+        <div class="code-lang">bash — SSH into EC2 first</div>
+      </div>
+      <pre><span class="comment"># SSH into your EC2</span>
+ssh -i ~/Downloads/Zabbix-keyPair.pem ubuntu@&lt;your-elastic-ip&gt;
+
+<span class="comment"># Download Zabbix repo for Ubuntu 22.04</span>
+wget https://repo.zabbix.com/zabbix/6.4/ubuntu/pool/main/z/zabbix-release/zabbix-release_6.4-1+ubuntu22.04_all.deb
+sudo dpkg -i zabbix-release_6.4-1+ubuntu22.04_all.deb
+sudo apt update
+
+<span class="comment"># Install agent</span>
+sudo apt install -y zabbix-agent
+
+<span class="comment"># Find Docker gateway IP (needed for config)</span>
+sudo docker inspect zabbix-server | grep -i gateway
+<span class="comment"># Note the Gateway IP — usually 172.18.0.1</span>
+
+<span class="comment"># Configure agent</span>
+sudo nano /etc/zabbix/zabbix_agentd.conf
+<span class="comment"># Set these values:</span>
+<span class="key">Server</span>=<span class="val">127.0.0.1,172.18.0.1</span>
+<span class="key">ServerActive</span>=<span class="val">127.0.0.1</span>
+<span class="key">Hostname</span>=<span class="val">EC2-Zabbix-Server</span>
+
+<span class="comment"># Start and enable agent</span>
+sudo systemctl enable zabbix-agent
+sudo systemctl start zabbix-agent
+sudo systemctl status zabbix-agent</pre>
+    </div>
+
+    <div class="tip tip-warning">
+      <div class="tip-icon">🐳</div>
+      <div class="tip-content">
+        <strong>Docker Network Note</strong>
+        Because Zabbix server runs inside Docker, it communicates with the host agent via the Docker bridge gateway IP (typically <code>172.18.0.1</code>), NOT via <code>127.0.0.1</code>. Always verify with <code>docker inspect zabbix-server | grep Gateway</code>.
+      </div>
+    </div>
+  </div>
+
+  <!-- Step 9 -->
+  <div class="section" id="s9">
+    <div class="section-header">
+      <div class="step-num">09</div>
+      <div>
+        <div class="section-title">Add EC2 Host for System Monitoring</div>
+        <div class="section-desc">// cpu / memory / disk / network graphs</div>
+      </div>
+    </div>
+
+    <div class="nav-path">
+      <span class="page">Configuration</span>
+      <span class="arrow">→</span>
+      <span class="page">Hosts</span>
+      <span class="arrow">→</span>
+      <span class="page">Create host</span>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Host Settings</div>
+      <table class="config-table">
+        <tr><th>Field</th><th>Value</th><th>Note</th></tr>
+        <tr><td>Host name</td><td>EC2-Zabbix-Server</td><td>Must match Hostname in agent config</td></tr>
+        <tr><td>Groups</td><td>Linux servers</td><td>Built-in group</td></tr>
+        <tr><td>Interface IP</td><td>172.18.0.1</td><td>Docker gateway IP</td></tr>
+        <tr><td>Port</td><td>10050</td><td>Default agent port</td></tr>
+        <tr><td>Template</td><td>Linux by Zabbix agent</td><td>Search in Templates tab</td></tr>
+      </table>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Auto-Created Triggers from Template</div>
+      <ul class="steps">
+        <li><strong>High CPU utilization</strong> — fires when CPU &gt; 90% for 5 minutes</li>
+        <li><strong>High memory utilization</strong> — fires when memory &gt; 90%</li>
+        <li><strong>Lack of available memory</strong> — critical memory alert</li>
+        <li><strong>Disk space critically low</strong> — for / and /data volumes</li>
+        <li><strong>Load average too high</strong> — system load alert</li>
+        <li><strong>Zabbix agent not available</strong> — connectivity alert</li>
+      </ul>
+    </div>
+
+    <div class="tip tip-info">
+      <div class="tip-icon">📊</div>
+      <div class="tip-content">
+        <strong>Viewing Graphs</strong>
+        Go to Monitoring → Latest data → filter by EC2-Zabbix-Server → click <strong>Graph</strong> next to any metric to see live charts. Or go to Monitoring → Hosts → EC2-Zabbix-Server → click <strong>Graphs</strong> to see all 18+ graphs at once.
+      </div>
+    </div>
+  </div>
+
+  <!-- Step 10 -->
+  <div class="section" id="s10">
+    <div class="section-header">
+      <div class="step-num">10</div>
+      <div>
+        <div class="section-title">Destroy & Rebuild (Data Safe)</div>
+        <div class="section-desc">// how to teardown without losing zabbix config</div>
+      </div>
+    </div>
+
+    <div class="code-block">
+      <div class="code-header">
+        <div class="code-dots"><span></span><span></span><span></span></div>
+        <div class="code-lang">terraform — safe teardown</div>
+      </div>
+      <pre><span class="comment"># Step 1: Make sure prevent_destroy is enabled in main.tf</span>
+<span class="comment"># lifecycle { prevent_destroy = true }  ← must be uncommented</span>
+
+<span class="comment"># Step 2: Save your EBS volume ID</span>
+terraform output ebs_volume_id
+
+<span class="comment"># Step 3: Destroy only compute (EBS volume stays safe)</span>
+terraform destroy \
+  -target=module.ec2 \
+  -target=aws_volume_attachment.zabbix_data_attach \
+  -target=aws_eip.zabbix_eip \
+  -target=module.vpc \
+  -auto-approve
+
+<span class="comment"># Step 4: Rebuild everything — data auto-mounts</span>
+terraform apply -auto-approve
+
+<span class="comment"># Zabbix starts with ALL previous config intact ✅</span></pre>
+    </div>
+
+    <div class="tip tip-success">
+      <div class="tip-icon">🔒</div>
+      <div class="tip-content">
+        <strong>Why Data Survives</strong>
+        MySQL data is bind-mounted to <code>/data/zabbix/mysql_data</code> on the EBS volume. The user_data script detects the existing filesystem (skips format), mounts it, and starts Docker. Your hosts, triggers, media types, and all config come back automatically.
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">What Lives Where</div>
+      <table class="config-table">
+        <tr><th>Data</th><th>Location</th><th>Survives Destroy?</th></tr>
+        <tr><td>Zabbix DB (all config)</td><td>/data/zabbix/mysql_data</td><td>✅ Yes (EBS)</td></tr>
+        <tr><td>docker-compose.yml</td><td>/data/zabbix/</td><td>✅ Yes (EBS)</td></tr>
+        <tr><td>EC2 OS / root disk</td><td>Root EBS (30GB)</td><td>❌ No (destroyed)</td></tr>
+        <tr><td>Terraform state</td><td>Local .tfstate file</td><td>✅ Yes (local disk)</td></tr>
+        <tr><td>Elastic IP</td><td>AWS (re-created)</td><td>⚠️ IP changes on destroy</td></tr>
+      </table>
+    </div>
+  </div>
+
+</div>
+
+<footer>
+  <div class="footer-text">
+    Zabbix 6.4.21 on AWS EC2 (ap-southeast-1) — Deployed with <span>Terraform</span> + <span>Docker Compose</span><br>
+    EBS Persistent Storage — Gmail SMTP Alerts — Linux by Zabbix Agent Template
+  </div>
+</footer>
+
+</body>
+</html>

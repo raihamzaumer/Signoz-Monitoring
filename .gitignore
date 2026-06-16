@@ -1,0 +1,75 @@
+# ==============================
+# Terraform Files
+# ==============================
+.terraform/
+*.tfstate
+*.tfstate.*
+crash.log
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+
+# Sensitive variable files
+*.tfvars
+*.tfvars.json
+
+# Terraform lock file (optional: keep if you want reproducibility)
+# .terraform.lock.hcl
+
+# ==============================
+# SSH Keys & Sensitive Files
+# ==============================
+*.pem
+*.key
+*.pub
+
+# Environment variables
+.env
+.env.*
+
+# ==============================
+# Logs
+# ==============================
+*.log
+
+# ==============================
+# OS Files
+# ==============================
+.DS_Store
+Thumbs.db
+
+# ==============================
+# IDE / Editor Files
+# ==============================
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# ==============================
+# Node (if using frontend/tools)
+# ==============================
+node_modules/
+dist/
+build/
+
+# ==============================
+# Python (if backend/scripts used)
+# ==============================
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# ==============================
+# Docker
+# ==============================
+docker-compose.override.yml
+
+# ==============================
+# Misc
+# ==============================
+*.bak
+*.tmp
+*.sh
