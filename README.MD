@@ -26,6 +26,33 @@ The entire infrastructure and deployment process is automated using Terraform an
 * 🔄 Fully Reproducible Infrastructure with Terraform
 
 ---
+## 📸 Screenshots
+
+| Infrastructure | Login |
+|---------------|-------|
+| ![](snapshots/InfraMonitoring.png) | ![](snapshots/Signozlogin.png) |
+
+| Dashboard | Server Monitoring |
+|-----------|-------------------|
+| ![](snapshots/DashBoard.png) | ![](snapshots/ServerMonitoring.png) |
+
+| Memory Usage | Resource Usage |
+|--------------|----------------|
+| ![](snapshots/MemoryUsage.png) | ![](snapshots/Usage.png) |
+
+| Cloud Resources | Hosts |
+|-----------------|-------|
+| ![](snapshots/CloudResource.png) | ![](snapshots/hosts.png) |
+
+| Alert Setup | Email Alert |
+|-------------|-------------|
+| ![](snapshots/alertSetup.png) | ![](snapshots/Emailalert.jpeg) |
+
+| Active Alert |
+|--------------|
+| ![](snapshots/Alert.png) |
+
+ ---
 
 ## 🏗️ Architecture
 
